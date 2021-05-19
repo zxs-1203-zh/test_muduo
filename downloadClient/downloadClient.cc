@@ -13,7 +13,9 @@ class DownloadClient
 
 public:
 	DownloadClient(EventLoop *loop, InetAddress servAddr)
-		:client_(loop, servAddr, "DownloadClient")
+		:loop_(loop),
+		 client_(loop, servAddr, "DownloadClient"),
+		 fout_("download.txt")
 	{ 
 		client_.setConnectionCallback(
 				std::bind(&DownloadClient::onConnection, this, _1));
@@ -30,25 +32,28 @@ public:
 private:
 	void onConnection(const TcpConnectionPtr &conn)
 	{
-		LOG_INFO << "TcpClient - " << conn->localAddress().toPort()
-			     << " to " << conn->peerAddress().toPort()
+		LOG_INFO << "TcpClient - " << conn->localAddress().toIpPort()
+			     << " to " << conn->peerAddress().toIpPort()
 				 << " is " << (conn->connected() ? " UP " : " DOWN ");
+
+		if(!conn->connected())
+		{
+			conn->shutdown();
+			loop_->quit();
+		}
 	}
 
 	void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time)
 	{
-		std::ofstream fout("dowload.txt");
 
 		string msg(buf->retrieveAllAsString());
 
-		LOG_INFO << "Downloading download.txt";
-
-		fout << msg;
-
-		LOG_INFO << "Done";
+		fout_ << msg;
 	}
 
+	EventLoop *loop_;
 	TcpClient client_;
+	std::ofstream fout_;
 
 };//DownloadClient
 
