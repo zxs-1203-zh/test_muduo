@@ -6,6 +6,10 @@
 namespace muduo
 {
 
+Poller::Poller(EventLoop *loop):
+	loop_(loop)
+{}
+
 Timestamp Poller::poll(int timeoutMs, 
 					   ChannelList *activeChannels)
 {
@@ -35,8 +39,7 @@ Timestamp Poller::poll(int timeoutMs,
 void Poller::updateChannel(Channel *channel)
 {
 	asserInLoopThread();
-	LOG_TRACE << "fd: " << channel->fd()
-		      << "events: " << channel->events();
+	LOG_TRACE << "fd: " << channel->fd() << "events: " << channel->events();
 
 	if(channel->index() < 0)
 	{
@@ -49,10 +52,24 @@ void Poller::updateChannel(Channel *channel)
 
 		pollfds_.push_back(pfd);
 		channel->set_index(pollfds_.size() - 1);
-		channels_[channel->fd()] = channel;
+		channels_[pfd.fd] = channel;
 	}
 	else
 	{
+		assert(channels_.find(channel->fd()) != channels_.end());
+
+		auto idx = channel->index();
+
+		assert(idx >= 0 && idx < pollfds_.size());
+		assert(pollfds_[idx].fd == channel->fd() || pollfds_[idx].fd == -1);
+
+		pollfds_[idx].events = channel->events();
+		pollfds_[idx].revents = 0;
+
+		if(channel->isNoneEvent())
+		{
+			pollfds_[idx].fd = -1;
+		}
 	}
 }
 
@@ -67,6 +84,8 @@ void Poller::fillActiveChannels(int numEvents,
 
 			assert(it != channels_.end());
 			assert(it->first == it->second->fd());
+
+			it->second->set_revents(pollfd.revents);
 
 			activeChannels->push_back(it->second);
 
