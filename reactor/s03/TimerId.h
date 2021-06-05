@@ -6,19 +6,19 @@
 namespace muduo
 {
 
-class TimerId //copyable
+class TimerId
 {
 
 public:
-	explicit TimerId(Timer *time): time_(time)
+	TimerId(Timer *timer):
+		timer_(timer)
 	{}
 
 private:
-	Timer *time_;
+	Timer *timer_;
 
 };//TimerId
 
 }//muduo
-
 
 #endif

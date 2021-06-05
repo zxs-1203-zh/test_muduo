@@ -1,5 +1,7 @@
 // copied from muduo/net/tests/TimerQueue_unittest.cc
 
+#include "TimerId.h"
+
 #include "EventLoop.h"
 
 #include <muduo/base/Thread.h>
