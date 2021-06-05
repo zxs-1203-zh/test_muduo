@@ -42,6 +42,8 @@ private:
 
 	void handleRead();
 
+	void addTimerInLoop(PTimer& timer);
+
 	EventLoop *loop_;
 	const int timerFd_;
 	Channel timerChannel_;

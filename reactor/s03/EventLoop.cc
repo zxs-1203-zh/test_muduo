@@ -1,4 +1,8 @@
+#include <mutex>
+#include <sys/eventfd.h>
+
 #include <muduo/base/Logging.h>
+#include <unistd.h>
 
 #include "TimerQueue.h"
 #include "Channel.h"
@@ -12,12 +16,27 @@ __thread EventLoop *owerLoop;
 
 const int kTimeOutMs = 10000;
 
+static int createEventFd()
+{
+	int evtFd = ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+
+	if(evtFd < 0)
+	{
+		LOG_SYSERR << "EventLoop.cc:createEventFd()";
+	}
+
+	return evtFd;
+}
+
 EventLoop::EventLoop():
 	pthreadId_(CurrentThread::tid()),
 	looping_(false),
 	quit_(false),
+	callingPendingFunctors_(false),
 	poller_(new Poller(this)),
-	timerQueue_(new TimerQueue(this))
+	timerQueue_(new TimerQueue(this)),
+	wakeupFd_(createEventFd()),
+	wakeupChannel_(new Channel(this, wakeupFd_))
 {
 	if(owerLoop == nullptr)
 	{
@@ -31,11 +50,18 @@ EventLoop::EventLoop():
 			      << " another EventLoop " << owerLoop 
 				  << " exists in this thread " << pthreadId_;
 	}
+
+	wakeupChannel_->setReadCallback(
+			std::bind(&EventLoop::handleRead,
+			          this));
+
+	wakeupChannel_->enableReading();
 }
 
 EventLoop::~EventLoop()
 {
 	assert(!looping_);
+	::close(wakeupFd_);
 	owerLoop = nullptr;
 }
 
@@ -55,13 +81,15 @@ void EventLoop::loop()
 	while(!quit_)
 	{
 		ActiveChannels activeChannels;
-		pollReturnTime = 
+		pollReturnTime_ = 
 			poller_->poll(kTimeOutMs, activeChannels);
 
 		for(auto channel : activeChannels)
 		{
 			channel->handleEvent();
 		}
+
+		doPendingFunctors();
 	}
 
 	looping_ = false;
@@ -70,6 +98,10 @@ void EventLoop::loop()
 void EventLoop::quit()
 {
 	quit_ = true;
+	if(!isInLoopThread())
+	{
+		wakeup();
+	}
 }
 
 void EventLoop::assertInLoopThread()
@@ -92,21 +124,90 @@ void EventLoop::abortNotInLoopThread()
 			  << CurrentThread::tid();
 }
 
-TimerId EventLoop::runAt(Timestamp when, const Callback &cb)
+TimerId EventLoop::runAt(Timestamp when, const Functor &cb)
 {
 	return timerQueue_->addTimer(cb, when, 0.0);
 }
 
-TimerId EventLoop::runAfter(double delay, const Callback &cb)
+TimerId EventLoop::runAfter(double delay, const Functor &cb)
 {
 	return runAt(addTime(Timestamp::now(), delay), cb);
 }
 
-TimerId EventLoop::runEvery(double interval, const Callback &cb)
+TimerId EventLoop::runEvery(double interval, const Functor &cb)
 {
 	return timerQueue_->addTimer(cb, 
 			                     addTime(Timestamp::now(), interval),
 								 interval);
+}
+
+void EventLoop::runInLoop(const Functor& cb)
+{
+	if(isInLoopThread())
+	{
+		cb();
+	}
+	else
+	{
+		queueInLoop(cb);
+	}
+}
+
+void EventLoop::queueInLoop(const Functor& cb)
+{
+	{
+		std::lock_guard<std::mutex> lk(mut_);
+		pendingFunctors_.push_back(cb);
+	}
+
+	if(!isInLoopThread() || callingPendingFunctors_)
+	{
+		wakeup();
+	}
+}
+
+void EventLoop::wakeup()
+{
+	int64_t one = 1;
+	ssize_t n = ::write(wakeupFd_, &one, sizeof one);
+
+	if(n != sizeof one)
+	{
+		LOG_ERROR << "EventLoop::wakeup() " << " writes "
+			      << n << " bytes instead of 8";
+	}
+}
+
+void EventLoop::handleRead()
+{
+	int64_t one = 1;
+	ssize_t n = ::read(wakeupFd_, &one, sizeof one);
+
+	if(n != sizeof one)
+	{
+		LOG_ERROR << "EventLoop::handleRead() " << " reads "
+			      << n << " bytes instead of 8";
+	}
+}
+
+
+void EventLoop::doPendingFunctors()
+{
+	std::vector<Functor> functors;
+
+	callingPendingFunctors_ = true;
+
+	{
+		std::lock_guard<std::mutex> lk(mut_);
+		functors.swap(pendingFunctors_);
+	}
+
+	for(auto& functor: functors)
+	{
+		functor();
+	}
+
+	callingPendingFunctors_ = false;
 }
 
 }//muduo

@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <bits/types/struct_timespec.h>
 #include <ctime>
+#include <functional>
 #include <strings.h>
 #include <sys/timerfd.h>
 
@@ -97,13 +99,21 @@ TimerId TimerQueue::addTimer(const TimerCallback& cb,
 {
 	PTimer newTimer(new Timer(cb, when, interval));
 
-	loop_->assertInLoopThread();
-
 	TimerId ret(newTimer.get());
 
-	insert(std::move(newTimer));
+
+	loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop,
+			         this,
+					 std::ref(newTimer)));
 
 	return ret;
+}
+
+void TimerQueue::addTimerInLoop(PTimer& newTimer)
+{
+	loop_->assertInLoopThread();
+
+	insert(std::move(newTimer));
 }
 
 TimerQueue::ExpiredTimers TimerQueue::getExpired(Timestamp now)
