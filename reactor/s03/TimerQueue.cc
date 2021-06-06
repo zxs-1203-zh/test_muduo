@@ -2,6 +2,7 @@
 #include <bits/types/struct_timespec.h>
 #include <ctime>
 #include <functional>
+#include <memory>
 #include <strings.h>
 #include <sys/timerfd.h>
 
@@ -97,23 +98,23 @@ TimerId TimerQueue::addTimer(const TimerCallback& cb,
 		         Timestamp when,
 				 double interval)
 {
-	PTimer newTimer(new Timer(cb, when, interval));
+	Timer* newTimer(new Timer(cb, when, interval));
 
-	TimerId ret(newTimer.get());
+	TimerId ret(newTimer);
 
 
 	loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop,
 			         this,
-					 std::ref(newTimer)));
+					 newTimer));
 
 	return ret;
 }
 
-void TimerQueue::addTimerInLoop(PTimer& newTimer)
+void TimerQueue::addTimerInLoop(Timer* newTimer)
 {
 	loop_->assertInLoopThread();
 
-	insert(std::move(newTimer));
+	insert(PTimer(newTimer));
 }
 
 TimerQueue::ExpiredTimers TimerQueue::getExpired(Timestamp now)
@@ -170,13 +171,16 @@ void TimerQueue::insert(PTimer&& timer)
 {
 	auto it = timers_.begin();
 
-	if(it == timers_.end() || it->first > timer->expiraton())
+	auto when = timer->expiraton();
+
+	if(it == timers_.end() || it->first > when)
 	{
-		detail::resetTimerFd(timerFd_, timer->expiraton());
+		detail::resetTimerFd(timerFd_, when);
 	}
 
+
 	timers_.insert(
-			std::make_pair(timer->expiraton(), std::move(timer)));
+			std::make_pair(when, std::move(timer)));
 }
 
 

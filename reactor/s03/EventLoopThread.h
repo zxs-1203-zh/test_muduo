@@ -3,9 +3,9 @@
 
 #include <mutex>
 #include <condition_variable>
+#include <thread>
 
-#include <muduo/base/Thread.h>
-
+#include "Channel.h"
 #include "EventLoop.h"
 
 namespace muduo
@@ -18,22 +18,32 @@ public:
 	EventLoopThread(const EventLoopThread&) = delete;
 	EventLoopThread& operator=(const EventLoopThread&) = delete;
 
-	EventLoopThread();
-	~EventLoopThread();
+	EventLoopThread():
+		loop_(nullptr),
+		exiting_(false)
+	{}
+
+	~EventLoopThread()
+	{
+		exiting_ = true;
+		loop_->quit();
+		thread_.join();
+	}
 
 	EventLoop* startLoop();
 
 private:
 	void threadFuc();
 
+	EventLoop *loop_; //guraded by mut_
+	bool exiting_;
+	std::thread thread_;
 	mutable std::mutex mut_;
 	std::condition_variable cond_;
-	Thread thread_;
-	EventLoop *loop_;
-	bool exiting_;
+
 
 };//EventLoopThread
 
-}//muduo
+}//muduok
 
 #endif

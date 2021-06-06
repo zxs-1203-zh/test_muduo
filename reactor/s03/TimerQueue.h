@@ -42,7 +42,7 @@ private:
 
 	void handleRead();
 
-	void addTimerInLoop(PTimer& timer);
+	void addTimerInLoop(Timer* timer);
 
 	EventLoop *loop_;
 	const int timerFd_;

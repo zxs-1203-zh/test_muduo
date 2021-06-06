@@ -4,10 +4,11 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <vector>
+#include <atomic>
 
 #include <muduo/base/Logging.h>
 #include <muduo/base/Thread.h>
-#include <vector>
 
 namespace muduo
 {
@@ -61,7 +62,7 @@ private:
 	const pid_t pthreadId_;
 
 	bool looping_;
-	bool quit_;
+	std::atomic_bool quit_;
 	bool callingPendingFunctors_;
 
 	std::unique_ptr<Poller> poller_;

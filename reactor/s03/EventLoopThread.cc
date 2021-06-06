@@ -1,29 +1,21 @@
 #include "EventLoopThread.h"
 #include <mutex>
+#include <thread>
+
+#include <sys/eventfd.h>
+
+#include <muduo/base/Logging.h>
+
 
 namespace muduo
 {
 
-EventLoopThread::EventLoopThread():
-	thread_(std::bind(&EventLoopThread::threadFuc, this)),
-	loop_(nullptr),
-	exiting_(false)
-{ }
-
-EventLoopThread::~EventLoopThread()
-{
-	exiting_ = true;
-	loop_->quit();
-	thread_.join();
-}
-
 EventLoop* EventLoopThread::startLoop()
 {
-	assert(!thread_.started());
-	thread_.start();
+	thread_ = std::thread(std::bind(&EventLoopThread::threadFuc, this));
 
 	std::unique_lock<std::mutex> lk(mut_);
-	cond_.wait(lk, [=](){return loop_ != nullptr;});
+	cond_.wait(lk, [&](){return loop_;});
 
 	return loop_;
 }
@@ -35,9 +27,10 @@ void EventLoopThread::threadFuc()
 	{
 		std::lock_guard<std::mutex> lk(mut_);
 		loop_ = &loop;
+		cond_.notify_all();
 	}
 
-	loop_->loop();
+	loop.loop();
 }
 
-}//muduo
+};//muduo

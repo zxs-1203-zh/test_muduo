@@ -23,6 +23,7 @@ static int createEventFd()
 	if(evtFd < 0)
 	{
 		LOG_SYSERR << "EventLoop.cc:createEventFd()";
+		abort();
 	}
 
 	return evtFd;
@@ -168,24 +169,26 @@ void EventLoop::queueInLoop(const Functor& cb)
 
 void EventLoop::wakeup()
 {
-	int64_t one = 1;
+	uint64_t one = 1;
 	ssize_t n = ::write(wakeupFd_, &one, sizeof one);
 
 	if(n != sizeof one)
 	{
-		LOG_ERROR << "EventLoop::wakeup() " << " writes "
-			      << n << " bytes instead of 8";
+		LOG_ERROR << "EventLoop::wakeup() writes "
+			      << n << " bytes instead of 8"
+				  << " errno = " << errno
+				  << " fd_= " << wakeupFd_;
 	}
 }
 
 void EventLoop::handleRead()
 {
-	int64_t one = 1;
+	uint64_t one = 1;
 	ssize_t n = ::read(wakeupFd_, &one, sizeof one);
 
 	if(n != sizeof one)
 	{
-		LOG_ERROR << "EventLoop::handleRead() " << " reads "
+		LOG_ERROR << "EventLoop::handleRead() reads "
 			      << n << " bytes instead of 8";
 	}
 }
