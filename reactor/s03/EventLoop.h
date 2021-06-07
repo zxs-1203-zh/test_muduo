@@ -71,7 +71,7 @@ private:
 
 	int wakeupFd_;
 	std::unique_ptr<Channel> wakeupChannel_;
-	mutable std::mutex mut_;
+	mutable std::mutex mutPenFunc_;
 	std::vector<Functor> pendingFunctors_; //guarded by mut
 	
 	Timestamp pollReturnTime_;

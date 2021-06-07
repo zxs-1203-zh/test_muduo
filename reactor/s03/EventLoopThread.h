@@ -4,6 +4,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
+#include <memory>
 
 #include "Channel.h"
 #include "EventLoop.h"
@@ -35,7 +36,7 @@ public:
 private:
 	void threadFuc();
 
-	EventLoop *loop_; //guraded by mut_
+	std::shared_ptr<EventLoop> loop_; //guraded by mut_
 	bool exiting_;
 	std::thread thread_;
 	mutable std::mutex mut_;

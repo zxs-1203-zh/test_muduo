@@ -1,3 +1,4 @@
+#include <atomic>
 #include <mutex>
 #include <sys/eventfd.h>
 
@@ -51,6 +52,7 @@ EventLoop::EventLoop():
 			      << " another EventLoop " << owerLoop 
 				  << " exists in this thread " << pthreadId_;
 	}
+
 
 	wakeupChannel_->setReadCallback(
 			std::bind(&EventLoop::handleRead,
@@ -157,7 +159,7 @@ void EventLoop::runInLoop(const Functor& cb)
 void EventLoop::queueInLoop(const Functor& cb)
 {
 	{
-		std::lock_guard<std::mutex> lk(mut_);
+		std::lock_guard<std::mutex> lk(mutPenFunc_);
 		pendingFunctors_.push_back(cb);
 	}
 
@@ -201,7 +203,7 @@ void EventLoop::doPendingFunctors()
 	callingPendingFunctors_ = true;
 
 	{
-		std::lock_guard<std::mutex> lk(mut_);
+		std::lock_guard<std::mutex> lk(mutPenFunc_);
 		functors.swap(pendingFunctors_);
 	}
 

@@ -1,4 +1,5 @@
 #include "EventLoopThread.h"
+#include <memory>
 #include <mutex>
 #include <thread>
 
@@ -17,20 +18,19 @@ EventLoop* EventLoopThread::startLoop()
 	std::unique_lock<std::mutex> lk(mut_);
 	cond_.wait(lk, [&](){return loop_;});
 
-	return loop_;
+	return loop_.get();
 }
 
 void EventLoopThread::threadFuc()
 {
-	EventLoop loop;
-
 	{
 		std::lock_guard<std::mutex> lk(mut_);
-		loop_ = &loop;
+		loop_ = std::shared_ptr<EventLoop>(new EventLoop);
 		cond_.notify_all();
 	}
 
-	loop.loop();
+	loop_->loop();
+
 }
 
 };//muduo
