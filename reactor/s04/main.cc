@@ -1,24 +1,27 @@
-#include "TimerId.h"
+#include "Acceptor.h"
 #include "EventLoop.h"
-#include "EventLoopThread.h"
+#include "InetAddress.h"
+#include "SocketsOps.h"
 #include <stdio.h>
 
-void runInThread()
+void newConnection(int sockfd, const muduo::InetAddress& peerAddr)
 {
-  printf("runInThread(): pid = %d, tid = %d\n",
-         getpid(), muduo::CurrentThread::tid());
+  printf("newConnection(): accepted a new connection from %s\n",
+         peerAddr.toHostPort().c_str());
+  ::write(sockfd, "How are you?\n", 13);
+  muduo::sockets::close(sockfd);
 }
 
 int main()
 {
-  printf("main(): pid = %d, tid = %d\n",
-         getpid(), muduo::CurrentThread::tid());
+  printf("main(): pid = %d\n", getpid());
 
-  muduo::EventLoopThread loopThread;
-  muduo::EventLoop* loop = loopThread.startLoop();
-  loop->runInLoop(runInThread);
-  loop->runAfter(2, runInThread);
-  loop->quit();
+  muduo::InetAddress listenAddr(9981);
+  muduo::EventLoop loop;
 
-  printf("exit main().\n");
+  muduo::Acceptor acceptor(&loop, listenAddr);
+  acceptor.setNewConnectionCallback(newConnection);
+  acceptor.listen();
+
+  loop.loop();
 }

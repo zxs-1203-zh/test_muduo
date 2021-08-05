@@ -10,7 +10,7 @@ class TimerId
 {
 
 public:
-	TimerId(Timer *timer):
+	explicit TimerId(Timer *timer):
 		timer_(timer)
 	{}
 
