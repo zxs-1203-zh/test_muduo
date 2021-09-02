@@ -25,7 +25,7 @@ void EventLoopThread::threadFuc()
 {
 	{
 		std::lock_guard<std::mutex> lk(mut_);
-		loop_ = std::shared_ptr<EventLoop>(new EventLoop);
+		loop_ = std::make_shared<EventLoop>();
 		cond_.notify_all();
 	}
 

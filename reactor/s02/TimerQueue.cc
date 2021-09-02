@@ -92,8 +92,6 @@ TimerQueue::TimerQueue(EventLoop *loop):
 	timerFd_(detail::createTimerFd()),
 	channel_(loop, timerFd_)
 {
-	printf("TimerQueue::TimerQueue()\n");
-
 	channel_.setReadCallback(
 			std::bind(&TimerQueue::handleRead, this));
 
