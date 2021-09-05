@@ -5,10 +5,10 @@
 
 #include <muduo/base/Timestamp.h>
 
+#include "Callbacks.h"
+
 namespace muduo
 {
-
-typedef std::function<void()> TimerCallback;
 
 class Timer//noncopyable
 {

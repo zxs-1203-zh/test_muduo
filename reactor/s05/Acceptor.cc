@@ -34,5 +34,9 @@ void Acceptor::handleRead()
 		{
 			newConnectionCallback_(connFd, addr);
 		}
+		else
+		{
+			sockets::close(connFd);
+		}
 	}
 }

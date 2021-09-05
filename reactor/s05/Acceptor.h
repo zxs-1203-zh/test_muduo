@@ -14,10 +14,6 @@ class Acceptor//noncopyable
 {
 
 public:
-
-	typedef std::function<void(int connFd, InetAddress peerAddr)>
-		    NewConnectionCallback;
-
 	Acceptor(const Acceptor&) = delete;
 	Acceptor& operator=(const Acceptor&) = delete;
 

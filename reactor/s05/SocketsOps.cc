@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <cstdio>
 #include <netinet/in.h>
+#include <strings.h>
 #include <sys/socket.h>
 
 #include <muduo/base/Logging.h>
@@ -89,6 +90,18 @@ void toHostPort(char* buf, size_t size, const struct sockaddr_in& addr)
 	::inet_ntop(AF_INET, (void*) &addr.sin_addr, ip, sizeof(ip));
 	uint16_t port = networkToHost16(addr.sin_port);
 	::snprintf(buf, size, "%s:%u", ip, port);
+}
+
+struct sockaddr_in getLocalAddr(int sockFd)
+{
+	struct sockaddr_in localAddr;
+	::bzero(&localAddr, sizeof localAddr);
+	socklen_t addrLen = sizeof localAddr;
+	if(::getsockname(sockFd, (SA*) &localAddr, &addrLen) != 0)
+	{
+		LOG_SYSERR << "sockets::getLocalAddr";
+	}
+	return localAddr;
 }
 
 }//sockets

@@ -2,6 +2,7 @@
 #define CHANNEL_H
 
 #include <functional>
+#include "Callbacks.h"
 
 namespace muduo
 {
@@ -14,8 +15,6 @@ class Channel//noncopyable
 public:
 	Channel(const Channel&) = delete;
 	Channel& operator=(const Channel&) = delete;
-
-	typedef std::function<void()> EventCallback;
 
 	Channel(EventLoop *loop, int fd);
 

@@ -54,6 +54,8 @@ void fromHostPort(const char* ip, uint16_t port, struct sockaddr_in* addr);
 
 void toHostPort(char* buf, size_t size, const struct sockaddr_in& addr);
 
+struct sockaddr_in getLocalAddr(int sockFd);
+
 }//sockets
 
 }//muduo
