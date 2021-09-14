@@ -6,6 +6,7 @@
 #include "TcpConnection.h"
 
 #include <cstdio>
+#include <functional>
 #include <string>
 
 using namespace muduo;
@@ -46,5 +47,16 @@ void TcpServer::newConnection(int connFd, const InetAddress &peerAddress)
 	connections_[name] = conn;
 	conn->setConnectionCallback(connectionCallback_);
 	conn->setMessageCallback(messageCallback_);
+	conn->setCloseCallback(std::bind(&TcpServer::removeConnection, this, _1));
 	conn->connectEstablished();
+}
+
+void TcpServer::removeConnection(const TcpConnectionPtr &conn)
+{
+	loop_->assertInLoopThread();
+	size_t n = connections_.erase(conn->name());
+	assert(n == 1);
+	(void)n;
+
+	loop_->queueInLoop(std::bind(&TcpConnection::connectDistroyed, conn));
 }

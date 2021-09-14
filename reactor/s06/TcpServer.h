@@ -40,6 +40,8 @@ private:
 	typedef std::map<std::string, TcpConnectionPtr> ConnectionMap;
 	void newConnection(int connFd, const InetAddress &peerAddress);
 
+	void removeConnection(const TcpConnectionPtr &conn);
+
 	MessageCallback messageCallback_;
 	ConnectionCallback connectionCallback_;
 

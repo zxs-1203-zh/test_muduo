@@ -18,6 +18,13 @@ public:
 
 	Channel(EventLoop *loop, int fd);
 
+	~Channel();
+
+	EventLoop *ownerLoop()
+	{
+		return loop_;
+	}
+
 	int fd()const
 	{
 		return fd_;
@@ -63,9 +70,20 @@ public:
 		errorCallback_ = cb;
 	}
 
+	void setCloseCallback(const EventCallback &cb)
+	{
+		closeCallback_ = cb;
+	}
+
 	void enableReading()
 	{
 		events_ |= kReadEvent;
+		update();
+	}
+
+	void disableAll()
+	{
+		events_ = kNoneEvent;
 		update();
 	}
 
@@ -79,9 +97,12 @@ private:
 	int events_;
 	int revents_;
 	int idx_;
+	bool eventHandling_;
+
 	EventCallback readCallback_;
 	EventCallback writeCallback_;
 	EventCallback errorCallback_;
+	EventCallback closeCallback_;
 
 	static const int kNoneEvent;
 	static const int kReadEvent;

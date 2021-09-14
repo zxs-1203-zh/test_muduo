@@ -1,3 +1,4 @@
+#include <iterator>
 #include <algorithm>
 #include <cassert>
 #include <muduo/base/Logging.h>
@@ -56,11 +57,6 @@ void Poller::updateChannel(Channel *channel)
 		pfd.events = channel->events();
 		pfd.revents = 0;
 
-		if(channel->isNoneEvents())
-		{
-			pfd.fd = -1;
-		}
-
 		pollFds_.push_back(std::move(pfd));
 
 		channel->setIndex(pollFds_.size() - 1);
@@ -76,16 +72,40 @@ void Poller::updateChannel(Channel *channel)
 		auto& pfd = pollFds_[idx];
 
 		assert(pfd.fd == channel->fd() ||
-			   pfd.fd == -1);
-
-		if(!channel->isNoneEvents())
-		{
-			pfd.fd = channel->fd();
-		}
+			   pfd.fd == -channel->fd() - 1);
 
 		pfd.events = channel->events();
 		pfd.revents = 0;
+		if(channel->isNoneEvents())
+		{
+			pfd.fd = -channel->fd() - 1;
+		}
 	}
+}
+
+void Poller::removeChannel(Channel *channel)
+{
+	loop_->assertInLoopThread();
+	auto it = channels_.find(channel->fd());
+	assert(it != channels_.end());
+	assert(it->second == channel);
+	const auto idx = channel->index();
+	assert(idx >= 0 && idx < pollFds_.size());
+	assert(pollFds_[idx].fd == -channel->fd() - 1);
+	size_t n = channels_.erase(channel->fd());
+	assert(n == 1);
+	(void)n;
+	if(idx != pollFds_.size() - 1)
+	{
+		int fdLast = pollFds_.back().fd;
+		if(fdLast < 0)
+		{
+			fdLast = -fdLast - 1;
+		}
+		iter_swap(pollFds_.begin() + idx, pollFds_.end() - 1);
+		channels_[fdLast]->setIndex(idx);
+	}
+	pollFds_.pop_back();
 }
 
 void Poller::findActiveChannels(int numEvents,

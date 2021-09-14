@@ -23,7 +23,9 @@ public:
 
 	Timestamp poll(int timeOutMs, ActiveChannels& activeChannels);
 
-	void updateChannel(Channel* channel);
+	void updateChannel(Channel *channel);
+
+	void removeChannel(Channel *channel);
 
 private:
 	typedef std::map<int, Channel*> ChannelList;

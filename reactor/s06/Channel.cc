@@ -18,8 +18,14 @@ Channel::Channel(EventLoop *loop, int fd):
 	fd_(fd),
 	events_(0),
 	revents_(0),
-	idx_(-1)
+	idx_(-1),
+	eventHandling_(false)
 {}
+
+Channel::~Channel()
+{
+	assert(!eventHandling_);
+}
 
 void Channel::update()
 {
@@ -28,7 +34,23 @@ void Channel::update()
 
 void Channel::handleEvent()
 {
-	if(revents_ & kReadEvent)
+	eventHandling_ = true;
+
+	if(revents_ & POLLNVAL)
+	{
+		LOG_WARN << "Channel::handleEvent() POLLNVAL";
+	}
+
+	if((revents_ & POLLHUP) & !(revents_ & POLLIN))
+	{
+		LOG_WARN << "Channel::handleEvent() POLLHUP";
+		if(closeCallback_)
+		{
+			closeCallback_();
+		}
+	}
+
+	else if(revents_ & kReadEvent)
 	{
 		if(readCallback_)
 		{
@@ -49,6 +71,7 @@ void Channel::handleEvent()
 			errorCallback_();
 		}
 	}
+	eventHandling_ = false;
 }
 
 }//muduo

@@ -74,6 +74,12 @@ void EventLoop::updateChannel(Channel *channel)
 	poller_->updateChannel(channel);
 }
 
+void EventLoop::removeChannel(Channel *channel)
+{
+	assertInLoopThread();
+	poller_->removeChannel(channel);
+}
+
 void EventLoop::loop()
 {
 	assertInLoopThread();

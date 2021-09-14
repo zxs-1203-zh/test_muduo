@@ -38,6 +38,11 @@ public:
 		messageCallback_ = cb;
 	}
 
+	void setCloseCallback(const CloseCallback &cb)
+	{
+		closeCallback_ = cb;
+	}
+
 	EventLoop *getLoop()const
 	{
 		return loop_;
@@ -65,8 +70,10 @@ public:
 
 	void connectEstablished();
 
+	void connectDistroyed();
+
 private:
-	enum StateE {kConncting, kConnected};
+	enum StateE {kConncting, kConnected, kDisConnected};
 
 	void setState(StateE state)
 	{
@@ -75,8 +82,15 @@ private:
 
 	void handleRead();
 
+	void handleWrite();
+
+	void handleClose();
+
+	void handleError();
+
 	ConnectionCallback connectionCallback_;
 	MessageCallback messageCallback_;
+	CloseCallback closeCallback_;
 	StateE state_;
 
 	EventLoop *loop_;
