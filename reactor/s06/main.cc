@@ -1,4 +1,3 @@
-#include "TcpConnection.h"
 #include "TcpServer.h"
 #include "EventLoop.h"
 #include "InetAddress.h"

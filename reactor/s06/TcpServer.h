@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 
+#include "TcpConnection.h"
 #include "Callbacks.h"
 
 namespace muduo

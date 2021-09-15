@@ -41,7 +41,9 @@ void TcpConnection::connectDistroyed()
 	loop_->assertInLoopThread();
 	assert(connected());
 	setState(kDisConnected);
-	ConnectionCallback(shared_from_this());
+
+	channel_->disableAll();
+	connectionCallback_(shared_from_this());
 
 	loop_->removeChannel(channel_.get());
 }

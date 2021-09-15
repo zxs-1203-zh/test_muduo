@@ -108,6 +108,7 @@ int getSocketError(int sockFd)
 {
 	int optval = 0;
 	socklen_t optlen = sizeof optlen;
+
 	if(::getsockopt(sockFd, SOL_SOCKET, SO_ERROR, &optlen, &optlen) < 0)
 	{
 		return errno;

@@ -67,7 +67,7 @@ void Poller::updateChannel(Channel *channel)
 	{
 		assert(it != channels_.end());
 		assert(it->second == channel);
-		assert(idx >= 0 && idx < pollFds_.size());
+		assert(idx >= 0 && idx < static_cast<int>(pollFds_.size()));
 
 		auto& pfd = pollFds_[idx];
 
@@ -90,12 +90,12 @@ void Poller::removeChannel(Channel *channel)
 	assert(it != channels_.end());
 	assert(it->second == channel);
 	const auto idx = channel->index();
-	assert(idx >= 0 && idx < pollFds_.size());
+	assert(idx >= 0 && idx < static_cast<int>(pollFds_.size()));
 	assert(pollFds_[idx].fd == -channel->fd() - 1);
 	size_t n = channels_.erase(channel->fd());
 	assert(n == 1);
 	(void)n;
-	if(idx != pollFds_.size() - 1)
+	if(idx != static_cast<int>(pollFds_.size()) - 1)
 	{
 		int fdLast = pollFds_.back().fd;
 		if(fdLast < 0)
