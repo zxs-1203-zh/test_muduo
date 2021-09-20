@@ -32,7 +32,7 @@ Channel::~Channel()
 	assert(!eventHandling_);
 }
 
-void Channel::handleEvent()
+void Channel::handleEvent(Timestamp receiveTime)
 {
 	eventHandling_ = true;
 
@@ -48,12 +48,11 @@ void Channel::handleEvent()
 			closeCallback_();
 		}
 	}
-
 	else if(revents_ & kReadEvent)
 	{
 		if(readCallback_)
 		{
-			readCallback_();
+			readCallback_(receiveTime);
 		}
 	}
 	else if(revents_ & kWriteEvent)

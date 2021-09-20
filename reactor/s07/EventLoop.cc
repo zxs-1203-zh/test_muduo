@@ -95,7 +95,7 @@ void EventLoop::loop()
 
 		for(auto channel : activeChannels)
 		{
-			channel->handleEvent();
+			channel->handleEvent(pollReturnTime_);
 		}
 
 		doPendingFunctors();

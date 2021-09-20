@@ -2,9 +2,11 @@
 #include "Socket.h"
 #include "Channel.h"
 #include "SocketsOps.h"
+#include <functional>
 #include <unistd.h>
 
 using namespace muduo;
+using namespace std::placeholders;
 
 TcpConnection::TcpConnection(EventLoop *loop, 
 			      const std::string &name,
@@ -19,7 +21,7 @@ TcpConnection::TcpConnection(EventLoop *loop,
 	peerAddr_(peerAddr)
 {
 	assert(loop_ != nullptr);
-	channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this));
+	channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this, _1));
 	channel_->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
 	channel_->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
 	channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
@@ -46,14 +48,16 @@ void TcpConnection::connectDistroyed()
 	loop_->removeChannel(channel_.get());
 }
 
-void TcpConnection::handleRead()
+void TcpConnection::handleRead(Timestamp receiveTime)
 {
-	char buf[65536]; //FIXME
-	ssize_t n = ::read(socket_->fd(), buf, sizeof buf);
+	int savedErrno = 0;
+	ssize_t n = inputBuffer_.readFd(socket_->fd(), &savedErrno);
 
 	if(n > 0)
 	{
-		messageCallback_(shared_from_this(), buf, n);
+		messageCallback_(shared_from_this(), 
+				         &inputBuffer_, 
+						 receiveTime);
 	}
 	else if(n == 0)
 	{
@@ -61,6 +65,7 @@ void TcpConnection::handleRead()
 	}
 	else
 	{
+		errno = savedErrno;
 		handleError();
 	}
 }

@@ -55,7 +55,7 @@ public:
 		idx_ = idx;
 	}
 
-	void setReadCallback(const EventCallback &cb)
+	void setReadCallback(const ReadEventCallback &cb)
 	{
 		readCallback_ = cb;
 	}
@@ -87,7 +87,7 @@ public:
 		update();
 	}
 
-	void handleEvent();
+	void handleEvent(Timestamp receiveTime);
 
 private:
 	void update();
@@ -98,7 +98,7 @@ private:
 	int revents_;
 	int idx_;
 	bool eventHandling_;
-	EventCallback readCallback_;
+	ReadEventCallback readCallback_;
 	EventCallback writeCallback_;
 	EventCallback errorCallback_;
 	EventCallback closeCallback_;

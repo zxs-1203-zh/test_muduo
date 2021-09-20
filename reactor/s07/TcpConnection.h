@@ -3,9 +3,12 @@
 #include <memory>
 #include <string>
 
+#include <muduo/base/Timestamp.h>
+
 #include "Callbacks.h"
 #include "InetAddress.h"
 #include "EventLoop.h"
+#include "Buffer.h"
 
 namespace muduo
 {
@@ -71,7 +74,7 @@ public:
 	void connectDistroyed();
 
 private:
-	void handleRead();
+	void handleRead(Timestamp receiveTime);
 
 	void handleWrite();
 
@@ -96,6 +99,7 @@ private:
 	std::unique_ptr<Channel> channel_;
 	InetAddress localAddr_;
 	InetAddress peerAddr_;
+	Buffer inputBuffer_;
 
 };//TcpConnection
 
