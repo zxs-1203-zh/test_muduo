@@ -7,10 +7,11 @@ using namespace muduo;
 
 ssize_t Buffer::readFd(int fd, int *savedErrno)
 {
+	const size_t writeable = writeableBytes();
 	char extraBuf[65536];
 	struct iovec iov[2]; 
 	iov[0].iov_base = beginWrite();
-	iov[0].iov_len = writeableBytes();
+	iov[0].iov_len = writeable;
 	iov[1].iov_base = extraBuf;
 	iov[1].iov_len = sizeof extraBuf;
 	const ssize_t n = ::readv(fd, iov, 2);
@@ -18,14 +19,14 @@ ssize_t Buffer::readFd(int fd, int *savedErrno)
 	{
 		*savedErrno = errno;
 	}
-	else if(static_cast<size_t>(n) < writeableBytes())
+	else if(static_cast<size_t>(n) < writeable)
 	{
 		hasWriten(n);
 	}
 	else
 	{
-		hasWriten(writeableBytes());
-		append(extraBuf, n - writeableBytes());
+		hasWriten(writeable);
+		append(extraBuf, n - writeable);
 	}
 	return n;
 }
