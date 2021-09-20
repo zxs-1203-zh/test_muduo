@@ -22,14 +22,14 @@ Channel::Channel(EventLoop *loop, int fd):
 	eventHandling_(false)
 {}
 
-Channel::~Channel()
-{
-	assert(!eventHandling_);
-}
-
 void Channel::update()
 {
 	loop_->updateChannel(this);
+}
+
+Channel::~Channel()
+{
+	assert(!eventHandling_);
 }
 
 void Channel::handleEvent()
@@ -43,7 +43,6 @@ void Channel::handleEvent()
 
 	if((revents_ & POLLHUP) && !(revents_ & POLLIN))
 	{
-		LOG_WARN << "Channel::handleEvent() POLLHUP";
 		if(closeCallback_)
 		{
 			closeCallback_();

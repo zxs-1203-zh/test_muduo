@@ -106,18 +106,16 @@ struct sockaddr_in getLocalAddr(int sockFd)
 
 int getSocketError(int sockFd)
 {
-	int optval = 0;
-	socklen_t optlen = sizeof optlen;
-
-	if(::getsockopt(sockFd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
+	int optVal = 0;
+	socklen_t optLen = sizeof optVal;
+	if(::getsockopt(sockFd, SOL_SOCKET, SO_ERROR, &optVal, &optLen) < 0)
 	{
 		return errno;
 	}
 	else
 	{
-		return optval;
+		return optVal;
 	}
-	assert(false);
 }
 
 }//sockets
