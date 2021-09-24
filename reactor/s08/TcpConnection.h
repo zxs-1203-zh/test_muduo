@@ -69,12 +69,16 @@ public:
 		return state_ == kConnected;
 	}
 
+	void send(const std::string &msg);
+
+	void shutdown();
+
 	void connectEstablished();
 
 	void connectDistroyed();
 
 private:
-	enum StateE {kConncting, kConnected, kDisConnected};
+	enum StateE {kConncting, kConnected, kDisConnecting, kDisConnected};
 
 	void setState(StateE state)
 	{
@@ -89,6 +93,10 @@ private:
 
 	void handleError();
 
+	void sendInLoop(const std::string &msg);
+
+	void shutdownInLoop();
+
 	ConnectionCallback connectionCallback_;
 	MessageCallback messageCallback_;
 	CloseCallback closeCallback_;
@@ -101,6 +109,7 @@ private:
 	InetAddress localAddr_;
 	InetAddress peerAddr_;
 	Buffer inputBuffer_;
+	Buffer outputBuffer_;
 
 };//TcpConnection
 

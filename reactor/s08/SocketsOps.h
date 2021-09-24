@@ -50,6 +50,8 @@ int accept(int sockFd, struct sockaddr_in* addr);
 
 void close(int sockFd);
 
+void shutdownWrite(int sockFd);
+
 void fromHostPort(const char* ip, uint16_t port, struct sockaddr_in* addr);
 
 void toHostPort(char* buf, size_t size, const struct sockaddr_in& addr);

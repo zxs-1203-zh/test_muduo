@@ -34,6 +34,11 @@ int Socket::accept(InetAddress* peerAddr)
 	return connFd;
 }
 
+void Socket::shutdownWrite()
+{
+	sockets::shutdownWrite(sockFd_);
+}
+
 void Socket::setReuse(bool on)
 {
 	int optVal = on ? 1 : 0;

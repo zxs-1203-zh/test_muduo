@@ -30,6 +30,8 @@ public:
 		return sockFd_;
 	}
 
+	void shutdownWrite();
+
 	void setReuse(bool on);
 
 private:

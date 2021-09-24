@@ -51,8 +51,12 @@ public:
 
 	void queueInLoop(const Functor& cb);
 
+	bool isInLoopThread()
+	{
+		return pthreadId_ == CurrentThread::tid();
+	}
+
 private:
-	bool isInLoopThread();
 	void abortNotInLoopThread();
 
 	void wakeup();

@@ -27,7 +27,7 @@ void onMessage(const muduo::TcpConnectionPtr& conn,
          conn->name().c_str(),
          receiveTime.toFormattedString().c_str());
 
-  printf("onMessage(): [%s]\n", buf->retrieveAsString().c_str());
+  conn->send(buf->retrieveAsString());
 }
 
 int main()

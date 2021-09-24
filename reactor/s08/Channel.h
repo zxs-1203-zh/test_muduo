@@ -1,5 +1,4 @@
-#ifndef CHANNEL_H
-#define CHANNEL_H
+#pragma once
 
 #include <functional>
 #include "Callbacks.h"
@@ -81,6 +80,23 @@ public:
 		update();
 	}
 
+	void enableWriting()
+	{
+		events_ |= kWriteEvent;
+		update();
+	}
+
+	void disableWriting()
+	{
+		events_ &= ~kWriteEvent;
+		update();
+	}
+
+	bool isWriting()
+	{
+		return events_ & kWriteEvent;
+	}
+
 	void disableAll()
 	{
 		events_ = kNoneEvent;
@@ -112,5 +128,3 @@ private:
 };//Channel
 
 }//muduo
-
-#endif

@@ -121,11 +121,6 @@ void EventLoop::assertInLoopThread()
 	}
 }
 
-bool EventLoop::isInLoopThread()
-{
-	return CurrentThread::tid() == pthreadId_;
-}
-
 void EventLoop::abortNotInLoopThread()
 {
 	LOG_ERROR << "EventLoop " << this << " created in "

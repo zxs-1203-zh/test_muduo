@@ -74,6 +74,14 @@ void close(int sockFd)
 	}
 }
 
+void shutdownWrite(int sockFd)
+{
+	if(::shutdown(sockFd, SHUT_WR) != 0)
+	{
+		LOG_SYSERR << "sockets::shutdownWrite";
+	}
+}
+
 void fromHostPort(const char* ip, uint16_t host, struct sockaddr_in* addr)
 {
 	addr->sin_family = AF_INET;
