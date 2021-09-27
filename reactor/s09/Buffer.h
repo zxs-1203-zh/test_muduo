@@ -57,7 +57,7 @@ public:
 
 	void retrieve(size_t len)
 	{
-		assert(len < writeableBytes());
+		assert(len <= readableBytes());
 		readIndex_ += len;
 	}
 

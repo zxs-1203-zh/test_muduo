@@ -114,7 +114,7 @@ struct sockaddr_in getLocalAddr(int sockFd)
 
 int getSocketError(int sockFd)
 {
-	int optVal = 0;
+	int optVal;
 	socklen_t optLen = sizeof optVal;
 	if(::getsockopt(sockFd, SOL_SOCKET, SO_ERROR, &optVal, &optLen) < 0)
 	{
@@ -125,7 +125,6 @@ int getSocketError(int sockFd)
 		return optVal;
 	}
 }
-
 }//sockets
 
 }//muduo

@@ -34,6 +34,8 @@ public:
 
 	void setReuse(bool on);
 
+	void setTcpNoDelay(bool on);
+
 private:
 	int sockFd_;
 

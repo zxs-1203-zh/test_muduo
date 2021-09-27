@@ -31,6 +31,11 @@ public:
 		messageCallback_ = cb;
 	}
 
+	void setWriteCompleteCallback(const WriteCompleteCallback &cb)
+	{
+		writeCompleteCallback_ = cb;
+	}
+
 	void start();
 
 private:
@@ -42,6 +47,7 @@ private:
 
 	ConnectionCallback connectionCallback_;
 	MessageCallback messageCallback_;
+	WriteCompleteCallback writeCompleteCallback_;
 	EventLoop *loop_;
 	std::string name_;
 	std::unique_ptr<Acceptor> acceptor_;

@@ -22,6 +22,7 @@ typedef std::function<void(int connFd, const InetAddress& peerAddr)> NewConnecti
 
 typedef std::function<void(const TcpConnectionPtr&)> ConnectionCallback;
 typedef std::function<void(const TcpConnectionPtr&)> CloseCallback;
+typedef std::function<void(const TcpConnectionPtr&)> WriteCompleteCallback;
 typedef std::function<void(const TcpConnectionPtr&,
 		                   Buffer *,
 						   Timestamp)> MessageCallback;

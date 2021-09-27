@@ -44,6 +44,11 @@ public:
 		closeCallback_ = cb;
 	}
 
+	void setWriteCompleteCallback(const WriteCompleteCallback &cb)
+	{
+		writeCompleteCallback_ = cb;
+	}
+
 	EventLoop *getLoop()const
 	{
 		return loop_;
@@ -68,6 +73,8 @@ public:
 	{
 		return state_ == kConnected;
 	}
+
+	void setTcpNoDelay(bool on);
 
 	void send(const std::string &msg);
 
@@ -101,6 +108,7 @@ private:
 	ConnectionCallback connectionCallback_;
 	MessageCallback messageCallback_;
 	CloseCallback closeCallback_;
+	WriteCompleteCallback writeCompleteCallback_;
 	EventLoop *loop_;
 	std::string name_;
 	std::unique_ptr<Socket> socket_;

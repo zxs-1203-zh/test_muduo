@@ -28,6 +28,11 @@ TcpConnection::TcpConnection(EventLoop *loop,
 	channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
 }
 
+void TcpConnection::setTcpNoDelay(bool on)
+{
+	socket_->setTcpNoDelay(on);
+}
+
 void TcpConnection::send(const std::string &msg)
 {
 	if(connected())
@@ -91,6 +96,7 @@ void TcpConnection::handleRead(Timestamp receiveTime)
 	else
 	{
 		errno = savedErrno;
+		LOG_SYSERR << "TcpConnection::handleRead()";
 		handleError();
 	}
 }
@@ -110,6 +116,11 @@ void TcpConnection::handleWrite()
 			if(outputBuffer_.readableBytes() == 0)
 			{
 				channel_->disableWriting();
+				if(writeCompleteCallback_)
+				{
+					loop_->queueInLoop(std::bind(writeCompleteCallback_, 
+								                 shared_from_this()));
+				}
 				if(state_ == kDisConnecting)
 				{
 					shutdownInLoop();
@@ -141,7 +152,7 @@ void TcpConnection::handleClose()
 
 void TcpConnection::handleError()
 {
-	int errNo = sockets::getSocketError(socket_->fd());
+	int errNo = sockets::getSocketError(channel_->fd());
 	LOG_ERROR << "TcpConnection::handleError() errno = "
 		      << errNo << " " << strerror_tl(errNo);
 }
@@ -158,6 +169,10 @@ void TcpConnection::sendInLoop(const std::string &msg)
 			if(static_cast<size_t>(nWrote) < msg.size())
 			{
 				LOG_TRACE << "there are more data to write";
+			}
+			else if(writeCompleteCallback_) //if nWrote == msg.size()
+			{
+				writeCompleteCallback_(shared_from_this());
 			}
 		}
 		else

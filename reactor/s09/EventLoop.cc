@@ -1,5 +1,6 @@
 #include <atomic>
 #include <mutex>
+#include <csignal>
 #include <sys/eventfd.h>
 
 #include <muduo/base/Logging.h>
@@ -29,6 +30,17 @@ static int createEventFd()
 
 	return evtFd;
 }
+
+class IgnoreSigPipe
+{
+public:
+	IgnoreSigPipe()
+	{
+		::signal(SIGPIPE, SIG_IGN);
+	}
+};
+
+IgnoreSigPipe ignoreSigPipe;
 
 EventLoop::EventLoop():
 	pthreadId_(CurrentThread::tid()),

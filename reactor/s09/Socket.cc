@@ -4,6 +4,8 @@
 
 #include <asm-generic/socket.h>
 #include <cstring>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 
 #include <muduo/base/Logging.h>
@@ -42,10 +44,17 @@ void Socket::shutdownWrite()
 void Socket::setReuse(bool on)
 {
 	int optVal = on ? 1 : 0;
-	int ret = ::setsockopt(sockFd_, SOL_SOCKET, SO_REUSEADDR, &optVal, sizeof(optVal));
-
-	if(ret == -1)
+	if(setsockopt(sockFd_, SOL_SOCKET, SO_REUSEADDR, &optVal, sizeof(optVal)) != 0)
 	{
 		LOG_SYSERR << "Socket::setReuse()";
+	}
+}
+
+void Socket::setTcpNoDelay(bool on)
+{
+	int optVal = on ? 1 : 0;
+	if(::setsockopt(sockFd_, IPPROTO_TCP, TCP_NODELAY, &optVal, sizeof optVal) != 0)
+	{
+		LOG_SYSERR << "Socket::setTcpNoDelay";
 	}
 }

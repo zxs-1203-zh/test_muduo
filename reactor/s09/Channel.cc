@@ -48,6 +48,13 @@ void Channel::handleEvent(Timestamp receiveTime)
 			closeCallback_();
 		}
 	}
+	else if(revents_ & kErrorEvent)
+	{
+		if(errorCallback_)
+		{
+			errorCallback_();
+		}
+	}
 	else if(revents_ & kReadEvent)
 	{
 		if(readCallback_)
@@ -60,13 +67,6 @@ void Channel::handleEvent(Timestamp receiveTime)
 		if(writeCallback_)
 		{
 			writeCallback_();
-		}
-	}
-	else if(revents_ & kErrorEvent)
-	{
-		if(errorCallback_)
-		{
-			errorCallback_();
 		}
 	}
 	eventHandling_ = false;
