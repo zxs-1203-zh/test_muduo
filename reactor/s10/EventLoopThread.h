@@ -19,10 +19,18 @@ public:
 	EventLoopThread(const EventLoopThread&) = delete;
 	EventLoopThread& operator=(const EventLoopThread&) = delete;
 
+
 	EventLoopThread():
 		loop_(nullptr),
 		exiting_(false)
 	{}
+
+	EventLoopThread(EventLoopThread &&rhs):
+		loop_(rhs.loop_),
+		exiting_(rhs.exiting_),
+		thread_(std::move(rhs.thread_))
+	{ }
+
 
 	~EventLoopThread()
 	{

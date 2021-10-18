@@ -5,9 +5,10 @@
 #include <string>
 
 #include "Callbacks.h"
-#include "Acceptor.h"
 #include "EventLoop.h"
 #include "TcpConnection.h"
+#include "Acceptor.h"
+#include "EventLoopThreadPool.h"
 
 namespace muduo
 {
@@ -36,12 +37,16 @@ public:
 		writeCompleteCallback_ = cb;
 	}
 
+	void setThreadNum(int numThreads);
+
 	void start();
 
 private:
 	void newConnection(int connFd, const InetAddress &peerAddr);
 
 	void removeConnection(const TcpConnectionPtr& conn);
+
+	void removeConnectionInLoop(const TcpConnectionPtr& conn);
 
 	typedef std::map<std::string, TcpConnectionPtr> ConnectionMap;
 
@@ -51,6 +56,7 @@ private:
 	EventLoop *loop_;
 	std::string name_;
 	std::unique_ptr<Acceptor> acceptor_;
+	std::unique_ptr<EventLoopThreadPool> threadPool_;
 	int nextConnId_;
 	bool started_;
 	ConnectionMap connectionMap_;
