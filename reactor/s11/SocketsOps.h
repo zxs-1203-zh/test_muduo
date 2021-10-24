@@ -48,6 +48,10 @@ void listenOrDie(int sockFd);
 
 int accept(int sockFd, struct sockaddr_in* addr);
 
+int connect(int sockFd, const struct sockaddr_in &addr);
+
+bool isSelfConnect(int sockFd);
+
 void close(int sockFd);
 
 void shutdownWrite(int sockFd);
@@ -57,6 +61,8 @@ void fromHostPort(const char* ip, uint16_t port, struct sockaddr_in* addr);
 void toHostPort(char* buf, size_t size, const struct sockaddr_in& addr);
 
 struct sockaddr_in getLocalAddr(int sockFd);
+
+struct sockaddr_in getPeerAddr(int sockFd);
 
 int getSocketError(int sockFd);
 

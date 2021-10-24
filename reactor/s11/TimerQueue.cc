@@ -81,7 +81,8 @@ void readTimerFd(int timerFd)
 TimerQueue::TimerQueue(EventLoop *loop):
 	loop_(loop),
 	timerFd_(detail::createTimerFd()),
-	timerChannel_(loop, timerFd_)
+	timerChannel_(loop, timerFd_),
+	callingExpiredTimers_(false)
 {
 	timerChannel_.setReadCallback(
 			std::bind(&TimerQueue::handleRead, this));
@@ -100,14 +101,16 @@ TimerId TimerQueue::addTimer(const TimerCallback& cb,
 {
 	Timer* newTimer(new Timer(cb, when, interval));
 
-	TimerId ret(newTimer);
-
-
 	loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop,
 			         this,
 					 newTimer));
 
-	return ret;
+	return TimerId(newTimer, newTimer->sequence());
+}
+
+void TimerQueue::cancel(TimerId timerId)
+{
+	loop_->runInLoop(std::bind(&TimerQueue::cancelInLoop, this, timerId));
 }
 
 void TimerQueue::addTimerInLoop(Timer* newTimer)
@@ -119,6 +122,9 @@ void TimerQueue::addTimerInLoop(Timer* newTimer)
 
 TimerQueue::ExpiredTimers TimerQueue::getExpired(Timestamp now)
 {
+	loop_->assertInLoopThread();
+	assert(timers_.size() == activeTimers_.size());
+
 	ExpiredTimers expiredTimers;
 
 	for(auto it = timers_.begin(); it != timers_.end();)
@@ -135,20 +141,34 @@ TimerQueue::ExpiredTimers TimerQueue::getExpired(Timestamp now)
 		}
 	}
 
+	for(auto &timer : expiredTimers)
+	{
+		size_t n = activeTimers_.erase(TimerId(timer.get(), timer->sequence()));
+		assert(n == 1);
+		(void)n;
+	}
+
+	assert(timers_.size() == activeTimers_.size());
+
 	return expiredTimers;
 }
 
 void TimerQueue::reset(ExpiredTimers& expiredTimers,
 		               Timestamp now)
 {
+	loop_->assertInLoopThread();
+
 	for(auto &timer : expiredTimers)
 	{
-		if(timer->repeat())
+		TimerId timerId(timer.get(), timer->sequence());
+		if(timer->repeat() && cancelingTimers_.find(timerId) == cancelingTimers_.end())
 		{
 			timer->restart(now);
 			insert(std::move(timer));
 		}
 	}
+
+	cancelingTimers_.clear();
 }
 
 void TimerQueue::handleRead()
@@ -159,16 +179,23 @@ void TimerQueue::handleRead()
 
 	ExpiredTimers expiredTimers = getExpired(now);
 
+	callingExpiredTimers_ = true;
+
 	for(auto &timer : expiredTimers)
 	{
 		timer->run();
 	}
+
+	callingExpiredTimers_ = false;
 
 	reset(expiredTimers, now);
 }
 
 void TimerQueue::insert(PTimer&& timer)
 {
+	loop_->assertInLoopThread();
+	assert(timers_.size() == activeTimers_.size());
+
 	auto it = timers_.begin();
 
 	auto when = timer->expiraton();
@@ -178,9 +205,52 @@ void TimerQueue::insert(PTimer&& timer)
 		detail::resetTimerFd(timerFd_, when);
 	}
 
+	{
+	auto result = activeTimers_.insert(
+			TimerId(timer.get(), timer->sequence()));
+	assert(result.second);
+	(void)result;
+	}
 
-	timers_.insert(
+	{
+	auto result = timers_.insert(
 			std::make_pair(when, std::move(timer)));
+	assert(result.second);
+	(void)result;
+	}
+
+	assert(timers_.size() == activeTimers_.size());
+}
+
+void TimerQueue::cancelInLoop(TimerId timerId)
+{
+	loop_->assertInLoopThread();
+	assert(timers_.size() == activeTimers_.size());
+
+	auto it = activeTimers_.find(timerId);
+
+	if(it != activeTimers_.end())
+	{
+		auto itTimers = timers_.begin();
+		for(; itTimers != timers_.end(); ++itTimers)
+		{
+			if(itTimers->first == it->timer_->expiraton() && 
+			   itTimers->second.get() == it->timer_)
+			{
+				break;
+			}
+		}
+		assert(itTimers != timers_.end());
+		timers_.erase(itTimers);
+
+		activeTimers_.erase(it);
+	}
+	else if(callingExpiredTimers_)
+	{
+		cancelingTimers_.insert(timerId);
+	}
+
+	assert(timers_.size() == activeTimers_.size());
 }
 
 

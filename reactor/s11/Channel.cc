@@ -43,12 +43,13 @@ void Channel::handleEvent(Timestamp receiveTime)
 
 	if((revents_ & POLLHUP) && !(revents_ & POLLIN))
 	{
+		LOG_WARN << "Channel::handleEvent() POLLHUP";
 		if(closeCallback_)
 		{
 			closeCallback_();
 		}
 	}
-	else if(revents_ & kErrorEvent)
+	if(revents_ & kErrorEvent)
 	{
 		if(errorCallback_)
 		{

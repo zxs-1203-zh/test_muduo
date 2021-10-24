@@ -64,6 +64,19 @@ int accept(int sockFd, struct sockaddr_in* addr)
 	return connFd;
 }
 
+int connect(int sockFd, const struct sockaddr_in &addr)
+{
+	return ::connect(sockFd, (SA*) &addr, sizeof addr);
+}
+
+bool isSelfConnect(int sockFd)
+{
+	auto localAddr = getLocalAddr(sockFd);
+	auto peerAddr = getPeerAddr(sockFd);
+	return localAddr.sin_port == peerAddr.sin_port &&
+		   localAddr.sin_addr.s_addr == peerAddr.sin_addr.s_addr;
+}
+
 void close(int sockFd)
 {
 	int ret = ::close(sockFd);
@@ -110,6 +123,18 @@ struct sockaddr_in getLocalAddr(int sockFd)
 		LOG_SYSERR << "sockets::getLocalAddr";
 	}
 	return localAddr;
+}
+
+struct sockaddr_in getPeerAddr(int sockFd)
+{
+	struct sockaddr_in peerAddr;
+	::bzero(&peerAddr, sizeof peerAddr);
+	socklen_t addrLen = sizeof peerAddr;
+	if(::getpeername(sockFd, (SA*) &peerAddr, &addrLen) != 0)
+	{
+		LOG_SYSERR << "sockets::getPeerAddr";
+	}
+	return peerAddr;
 }
 
 int getSocketError(int sockFd)

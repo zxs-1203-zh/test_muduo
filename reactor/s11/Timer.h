@@ -1,6 +1,7 @@
 #ifndef TIMER_H
 #define TIMER_H
 
+#include <atomic>
 #include <functional>
 
 #include <muduo/base/Timestamp.h>
@@ -23,7 +24,8 @@ public:
 		Callback_(cb),
 		expiraton_(when),
 		interval_(interval),
-		repeat_(interval > 0.0)
+		repeat_(interval > 0.0),
+		sequence_(s_numCreated_.fetch_add(1, std::memory_order_seq_cst))
 	{}
 
 	bool repeat()const
@@ -53,12 +55,20 @@ public:
 		}
 	}
 
+	int64_t sequence()const
+	{
+		return sequence_;
+	}
+
 
 private:
 	TimerCallback Callback_;
 	Timestamp expiraton_;
 	double interval_;
 	const bool repeat_;
+	const int64_t sequence_;
+
+	static std::atomic_int64_t s_numCreated_;
 
 };//Timer
 

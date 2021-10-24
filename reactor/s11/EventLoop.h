@@ -53,6 +53,8 @@ public:
 	TimerId runEvery(double interval,
 			         const Functor& cb);
 
+	void cancel(TimerId timer);
+
 	void runInLoop(const Functor& cb);
 
 	void queueInLoop(const Functor& cb);

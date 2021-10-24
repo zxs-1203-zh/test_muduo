@@ -143,6 +143,11 @@ TimerId EventLoop::runEvery(double interval, const Functor &cb)
 								 interval);
 }
 
+void EventLoop::cancel(TimerId timer)
+{
+	timerQueue_->cancel(timer);
+}
+
 void EventLoop::runInLoop(const Functor& cb)
 {
 	if(isInLoopThread())
