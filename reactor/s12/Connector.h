@@ -52,6 +52,7 @@ public:
 	void restart()
 	{
 		loop_->assertInLoopThread();
+		retryDelayMs_ = kInitRetryDelayMs;
 		connect_ = true;
 		setState(kDisconnected);
 		startInLoop();

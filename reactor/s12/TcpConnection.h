@@ -9,12 +9,12 @@
 #include "InetAddress.h"
 #include "EventLoop.h"
 #include "Buffer.h"
+#include "Socket.h"
 
 namespace muduo
 {
 
 class Channel;
-class Socket;
 
 class TcpConnection: public std::enable_shared_from_this<TcpConnection>//noncopyable
 {
